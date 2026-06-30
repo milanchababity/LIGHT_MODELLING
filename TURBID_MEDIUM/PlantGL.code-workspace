@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "PlantGL",
+			"path": ".."
+		},
+		{
+			"name": "TURBID_MEDIUM",
+			"path": "../../../Desktop/TURBID_MEDIUM"
+		}
+	],
+	"settings": {}
+}

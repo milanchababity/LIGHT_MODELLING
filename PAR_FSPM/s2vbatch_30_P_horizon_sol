@@ -1,0 +1,16 @@
+#!/bin/bash
+cd /home/didier/Bureau/Romain/partage/PAR_FSPM
+
+# Balayage du repertoire de *.par
+for file in ./Wheat-Pea/PAR/Profils_Horizontaux/*
+do
+	fich="${file}"
+	dname=`dirname ${fich}`
+	dcname=$dname/../../Sol
+	# Gets basename excluding the extension
+	tmpname=`basename ${fich} .par`
+	# lookup a file.can = $canname
+	canname=$dcname/${tmpname:0:11}_sol.can
+	cp $canname $dname/../../../fort.51
+	./s2v < $dname/$tmpname.par > $dcname/../Sol/$tmpname.log
+done

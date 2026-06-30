@@ -1,0 +1,52 @@
+Python 2.6.4 (r264:75708, Oct 26 2009, 08:23:19) [MSC v.1500 32 bit (Intel)] on win32
+Type "copyright", "credits" or "license()" for more information.
+
+    ****************************************************************
+    Personal firewall software may warn about the connection IDLE
+    makes to its subprocess using this computer's internal loopback
+    interface.  This connection is not visible on any external
+    interface and no data is sent to or received from the Internet.
+    ****************************************************************
+    
+IDLE 2.6.4      ==== No Subprocess ====
+>>> 
+totale 530.796027096
+Fetuque 351.567755777
+Trefle 9.22827131892
+>>> 
+totale 418.639379315
+Fetuque 207.000041729
+Trefle 41.6393375861
+>>> 
+totale 286.496041467
+Fetuque 102.941173154
+Trefle 13.5548683129
+>>> 
+totale 897.52169536
+Fetuque 574.653332678
+Trefle 152.868362683
+>>> 
+totale 548.658388101
+Fetuque 377.873010003
+Trefle 0.785378098324
+>>> 
+totale 488.321599782
+Fetuque 275.961289225
+Trefle 42.3603105568
+>>> 
+totale 286.884389034
+Fetuque 54.0081635188
+Trefle 62.8762255151
+>>> 
+totale 1058.05267118
+Fetuque 759.307991726
+Trefle 128.744679453
+>>> 
+totale 947.111706708
+Fetuque 615.512317301
+Trefle 161.599389407
+>>> 
+totale 709.508962123
+Fetuque 385.156058116
+Trefle 154.352904007
+>>> 

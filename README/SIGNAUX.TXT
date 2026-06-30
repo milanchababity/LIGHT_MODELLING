@@ -1,0 +1,11 @@
+Pour la simulation des signaux, la propriété optique des feuilles doit être forcée.
+
+1-cas d'une propriété moyenne pour toute la feuille 
+opt={"Red":(absortance, reflectance)}(0.1,0.07)
+opt={"Far_red":(absorptance,reflectance)}(0.41,0.43)
+
+2-cas d'une propriété moyenne pour la face surpérieure et inférieure de la feuille 
+4 tuples 
+
+opt={"Red":(absorptance1,absorptance2,transmittance1,transmitance2)}
+

@@ -1,0 +1,21 @@
+to save env virtuel 
+conda env export > name.yml 
+
+to create vrirtual env with a requirements or yml file
+conda env create -f name.yml 
+
+to activate the virual env
+conda activate name of virutal env
+to deactivate the virtual env
+conda deactivate
+
+to install package from pip
+pip install name of package 
+
+to install package from conda distribution
+conda install name of package 
+
+to create env and install package from severals chanels
+conda create env create -n envrionnement_name -c conda-forge -c openalea3 packagename( openalea.caribu)
+
+

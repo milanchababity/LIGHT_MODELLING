@@ -1,0 +1,4 @@
+*.obj
+*test*
+results
+__pycache__

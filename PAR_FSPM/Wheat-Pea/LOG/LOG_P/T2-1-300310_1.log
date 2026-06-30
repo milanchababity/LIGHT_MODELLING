@@ -1,0 +1,21 @@
+"./s2v" 
+nji=9, nja=12, njz=1 
+bz[0]=42.723250
+52.419873 1 52.419873  83.968396 1 83.968396 1
+-> Fin de lecture de fort.51 
+=> Calcul des distributions
+==> nje rel = 1
+=> Ecriture des resultats : stdout, leafarea, out.dang
+xl=52.419873, yl=83.968396, xymaille=1.000000
+
+STATISTIQUES GLOBALES DE CHAQUE ESPECE
+esp 1 : surfT=853.894826 - Stot=853.894826, LAI=0.193996
+dist d'inclinaison :0.216387 0.172191 0.165519 0.084526 0.129442 0.076199 0.065134 0.066237 0.024365 
+dist. d'azimut : 0.121657 0.097681 0.116121 0.113866 0.074859 0.058223 0.065454 0.080283 0.064870 0.052776 0.070074 0.084135 
+
+ STATISTIQUES PAR CELLULE
+
+ nje=1, njx=1, njy=1, njz=1, nji=9
+
+ 1 1 1 1 	 0.005	 0.216  0.172  0.166  0.085  0.129  0.076  0.065  0.066  0.024  
+

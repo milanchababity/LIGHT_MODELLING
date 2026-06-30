@@ -1,0 +1,20 @@
+{
+    "panel_length": 5.8,
+    "panel_width": 6.47,
+    "panel_height": 4.61,
+    "panel_max_height": null,
+    "panel_min_height": null,
+    "average_crop_height": 0.55,
+    "panel_spacing": 0,
+    "panel_rows_spacing": 5.53,
+    "panel_north_angle": 0,
+    "panel_angle_direction": "E",
+    "panel_angle": 25,
+    "panel_angle_right_left": 0,
+    "latitude": 41.01,
+    "longitude": 5.76,
+    "date_start_crop": "2024-06-25 00:00:00",
+    "date_end_crop": "2024-06-25 00:00:00",
+    "nb_panel_rows": 5,
+    "panel_opacity": 1
+}

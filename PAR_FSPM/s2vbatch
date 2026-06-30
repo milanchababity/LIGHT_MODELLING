@@ -1,0 +1,16 @@
+#!/bin/bash
+cd /media/partage/PAR_FSPM
+
+# Balayage du repertoire de *.par
+for file in ./Wheat-Pea/PAR/*
+do
+	fich="${file}"
+	dname=`dirname ${fich}`
+	dcname=$dname/../CAN
+	# Gets basename excluding the extension
+	tmpname=`basename ${fich} .par`
+	# lookup a file.can = $canname
+	canname=$dcname/${tmpname}.can
+	cp $canname $dname/../../fort.51
+	./s2v < $dname/$tmpname.par > $dcname/../LOG/$tmpname.log
+done

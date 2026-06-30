@@ -1,0 +1,26 @@
+la convention de coordonnée entre la scène plangl et scène de caribu est différente
+afin de conaître les positions sud, nord, est et ouest, des simulations successives sur la base de maquette réalisées dans
+plantgl ont été réalisées afin de faire correspondre le x, et y de plantgl et scène de caribu
+
+Pour ce faire, determinant le sud et le nord sur la base des coordonnées de la course du soleil obtenu dans Gensky
+la course du soleil va du y à -y donc est =y et ouest =-y 
+== ceci dit, le y de caribuScene correspond à -y de scene plangl 
+== x positif dans le sud et - x dans le nord (x positif de Caribu  = x negatif de plantgl)
+
+consequence, les sens de coordonnées sont opposés entre plantgl et caribu
+pour la creation de scene sur plantgl 
+sud =-x
+nord =x
+est=-y
+ouest =y
+
+color=Material(Color3(34, 139, 34)) couleur verte claire
+
+Convertir can en scene = CaribuTriangleSet(read_can(can))
+Scene(__ ) pour convertir en scene plangl
+
+## Caribuscene.run
+direct=True par defaut , false= radiosity 
+## GenSky module permet de generer un ciel hemispherique discretisé en hauteur et azimuth
+GenSky(energy,"soc"=ciel claire,12 = division en azimuth ou horizontale et 9=division en hauteur (verticale)) le ciel est decoupé en 12 × 9 = 108 directions lumineuses
+uoc=vecteur uniforme dans toute les directions
