@@ -4,16 +4,14 @@ import time,datetime
 import logging
 import os.path
 from scipy.integrate import quad
-
 ### module caribu 
 import numpy as np
 from openalea.caribu.CaribuScene import CaribuScene
 from openalea.caribu.plantgl_adaptor import scene_to_cscene
 from openalea.plantgl.all import *
 ## module recup solar position 
-from MAPPING_CARIBU.MODULE_SOLAR_METEO.SOLAR_POS_METEO import coordinate_extraction
+# from MAPPING_CARIBU.MODULE_PANEL_NORMAL.recup_meteo import coordinate_extraction
 
-##
 import pandas as pd
 # module monitoring process
 from tqdm import tqdm
@@ -21,7 +19,6 @@ from functools import partial
 import multiprocessing
 from openalea.caribu.sky_tools import GetLight,GetLightsSun,Sun,Gensun
 ### information statut
-
 def log(message):
     print('{0} {1}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), message), flush=True)
 

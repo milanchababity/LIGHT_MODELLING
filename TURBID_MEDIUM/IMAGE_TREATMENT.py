@@ -40,9 +40,7 @@ print(data["Ratio_Rc_Rs"].values())
 data_values=list(data["Ratio_Rc_Rs"].values())
 toutes_les_valeurs = np.array(data_values)
 v_min = toutes_les_valeurs.min()
-print(v_max)
-print(f"Valeur minimale (Bleu) : {v_min}")
-print(f"Valeur maximale (Rouge) : {v_max}")
+
 
 fig, (ax_img, ax_cb) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [15, 1]}, figsize=(12, 6))
 # 3. Afficher votre image PLANT_BLANC.png

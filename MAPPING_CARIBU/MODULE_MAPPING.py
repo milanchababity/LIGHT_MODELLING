@@ -119,15 +119,15 @@ def mapping_2D (dataframe_panda,primitive_tri,id_primitive,scene_save,name,id_pa
     # # val_min= 0
     # # val_max=1
 
-    # # val_min=0
-    # # val_max=25
-    # level= np.linspace(val_min,val_max,25)
+    val_min=0
+    val_max=25
+    level= np.linspace(val_min,val_max,25)
         
     triangulation_parfaite = tri.Triangulation(y_flat,x_flat, triangles=triangles_indices)
     figure,axe=plt.subplots(figsize=(15, 15))
                     # triangle countourung
-    # contour = axe.tricontourf(triangulation_parfaite, z_flat, levels=level, vmin=val_min,vmax=val_max, cmap='jet')
-    contour = axe.tripcolor(triangulation_parfaite,facecolors=values_calculated,cmap="jet",shading="flat")
+    contour = axe.tricontourf(triangulation_parfaite, z_flat, levels=level, vmin=val_min,vmax=val_max, cmap='jet')
+    # contour = axe.tripcolor(triangulation_parfaite,facecolors=values_calculated,cmap="jet",shading="flat")
     
     divider = make_axes_locatable(axe)
     cax = divider.append_axes("right",size="2%",pad=0.5)
@@ -138,14 +138,16 @@ def mapping_2D (dataframe_panda,primitive_tri,id_primitive,scene_save,name,id_pa
     axe.autoscale_view()
     axe.set_aspect('equal')
     cbar = figure.colorbar(contour, cax=cax,extend="max")
-    cbar.set_label("Soil_irradiance(Megajoule/m2/jour)")
+    cbar.set_label("Soil_irradiance(Megajoule.m2.day-1)", rotation=270, labelpad=20)
     axe.set_xlabel("East-west")
     axe.set_ylabel("South-North")
-    axe.set_title(f"Light shelttering_")
+    axe.set_title(f"Irradiance on soil for {name} (Megajoule.m2.day-1)")
     axe.invert_xaxis()
-    plt.tight_layout()
+    # plt.tight_layout()
                 # axe.invert_yaxis()
+    # plt.show()
     plt.savefig(f"MAPPING_CARIBU/GIF_MAPPING/mapping_figure{name}.png", dpi=800)
+    
     plt.close()
     
     

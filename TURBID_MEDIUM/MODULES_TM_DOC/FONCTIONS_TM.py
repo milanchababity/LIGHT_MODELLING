@@ -10,6 +10,11 @@ from pathlib import Path
 from tqdm import tqdm
 import datetime
 from MAPPING_CARIBU.MODULE_PANEL_NORMAL import scene_modelling_normal
+from lightvegemanager.src.lightvegemanager.VTK import *
+from lightvegemanager.src.lightvegemanager.LVM import *
+import os
+
+
 
 def log(message):
     print('{0} {1}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), message), flush=True)
@@ -207,7 +212,18 @@ def semis_alfalfa(scene_init, nb_rangee, ecart_rangee, nb_plant, ecart_plant,ori
     
 """
 
+# alfalfa_scene=Scene(r"PAR_FSPM\Fescue-Alfalfa\Scene\HD1-asso-luz.bgeom")
+# _,_,sep_alfalfa=separation_scene_AF(alfalfa_scene)
+# alafalfa_HD1=color(sep_alfalfa,0.01)
+# Viewer.display()
 
+# path="testa"
+# vtk_scene=PlantGL_to_VTK(alfalfa_scene,path)
+# S2v=
+
+# print(vtk_scene)
+# PlantGL_to_VTK(alfalfa_scene,path)
+# print(os.listdir(r"C:\Users\mbabity\Documents"))
 
 
 

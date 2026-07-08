@@ -1,5 +1,5 @@
 from openalea.caribu.CaribuScene import CaribuScene
-from openalea.caribu.plantgl_adaptor import scene_to_cscene
+
 from openalea.plantgl.all import *
 from MAPPING_CARIBU.MODULE_PANEL_NORMAL import scene_modelling_normal
 import matplotlib.pyplot as plt
@@ -11,9 +11,7 @@ import math
 from matplotlib.patches import Rectangle
 from MAPPING_CARIBU.MODULE_PANEL_NORMAL import recup_meteo,scene_modelling_normal
 from tqdm import tqdm
-import meteo
-import requests 
-import json
+
 import pandas as pd 
 import datetime
 from multiprocessing import Pool
@@ -341,12 +339,12 @@ if __name__=="__main__":
 
     log("loading date for simulation")
     dict_date_test_mai={
-    "debut":"2025-09-01",
-    "fin":"2025-09-02",
+    "debut":"2025-06-25",
+    "fin":"2025-06-25",
     "tz":"Europe/Paris",
     "freq":"1h",
-    "latitude": 43.34,
-    "longitude": 0.122}
+    "latitude": 46.433331, # lusginan"
+    "longitude": 0.116670} # lusginan
     
     log("loading panel parameters")
     
@@ -413,18 +411,23 @@ if __name__=="__main__":
     
         
     log("loading arguments parameters")
-    parameters = [(params_panel_norm_sud,dict_soil_test_sud,dict_date_test_mai,"normal_sud"),
-            (params_panel_norm_chapeau_est,dict_soil_test_est,dict_date_test_mai,"normal_chapeau_est"),
-            (params_panel_ajoures_normal_sud,dict_soil_test_sud,dict_date_test_mai,"ajoures_panel_sud"),
-            (params_panel_ajoures_chapeau_est,dict_soil_test_est,dict_date_test_mai,"ajoures_panel_est")]
+    # parameters = [(params_panel_norm_sud,dict_soil_test_sud,dict_date_test_mai,"normal_sud"),
+    #         (params_panel_norm_chapeau_est,dict_soil_test_est,dict_date_test_mai,"normal_chapeau_est"),
+    #         (params_panel_ajoures_normal_sud,dict_soil_test_sud,dict_date_test_mai,"ajoures_panel_sud"),
+    #         (params_panel_ajoures_chapeau_est,dict_soil_test_est,dict_date_test_mai,"ajoures_panel_est")]
     
-    log("starting mutltiprocess")
+    # log("starting mutltiprocess")
 
-    with Pool (processes=4) as pool:
-        mapping_fixed_panel=pool.starmap(plotting_outpluts,parameters)
+    # with Pool (processes=4) as pool:
+    #     mapping_fixed_panel=pool.starmap(plotting_outpluts,parameters)
         
-    for element in mapping_fixed_panel:
-        element.to_csv(f"data_radiation{element}.csv")
+    # for element in mapping_fixed_panel:
+    #     element.to_csv(f"data_radiation{element}.csv")
+    log("starting simulation for normal panel")
+    mapping_south_panel=plotting_outpluts(params_panel_norm_sud,dict_soil_test_sud,dict_date_test_mai,"normal_sud")
+    
+    log("starting simulation for normal panel chapeau")
+    mapping_east_panel=plotting_outpluts(params_panel_norm_chapeau_est,dict_soil_test_est,dict_date_test_mai,"normal_chapeau_est")
 
     log('simulation successfuly ...................')
         
