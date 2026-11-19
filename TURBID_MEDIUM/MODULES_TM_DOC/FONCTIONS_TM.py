@@ -16,6 +16,7 @@ import os
 
 
 
+
 def log(message):
     print('{0} {1}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), message), flush=True)
 
@@ -53,16 +54,17 @@ def separation_scene_Autre_MIXTE(scene,id1=2,id2=1):
             shape_id2=Shape(ob.geometry,Material(Color3(139, 0, 0)),id=2000)
             scene_id2.append(shape_id2)
         else:
-            print("sol id")
+            shape_sol=Shape(ob.geometry,Material(Color3(0,0,0)),id=0)
     scene_mixt_1=Scene(scene_id1)
     scene_mixt_2=Scene(scene_id2)
     scene_final.add(scene_mixt_1)
     scene_final.add(scene_mixt_2)
+    scene_sol=Scene([shape_sol])
     
-    return scene_mixt_1,scene_mixt_2,scene_final
+    return scene_mixt_1,scene_mixt_2,scene_final,scene_sol
 
 
-def centre_scene_scaled(scene_scaled):
+def centre_scene_scaled(scene_scaled,sol):
     """_summary_
 We use this function for those scene which not center in (0,0)
 before using this function, the scene input must to be scaled 
@@ -76,13 +78,13 @@ we can use this function for mixture Fescues-Clover and Wheat pea. they need a c
         _type_: _description_
         scene center 
     """
-    xmax=BoundingBox(scene_scaled).getXMax()
-    xmin=BoundingBox(scene_scaled).getXMin()
-    ymax=BoundingBox(scene_scaled).getYMax()
-    ymin=BoundingBox(scene_scaled).getYMin()
+    xmax=BoundingBox(sol).getXMax()
+    xmin=BoundingBox(sol).getXMin()
+    ymax=BoundingBox(sol).getYMax()
+    ymin=BoundingBox(sol).getYMin()
     
-    dist_x=(xmax-xmin)/2
-    dist_y=(ymax-ymin)/2
+    dist_x=(xmax+xmin)/2
+    dist_y=(ymax+ymin)/2
     tr_x=0-dist_x
     tr_y=0-dist_y
     shape_final=[]

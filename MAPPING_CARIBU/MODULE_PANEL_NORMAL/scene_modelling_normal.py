@@ -34,6 +34,11 @@ def solar(t, longeur=25):
 
 
 
+def scene_consrtructor_contrl (resol=1):
+    points= [Vector3(-resol/2,-resol/2,0),Vector3(resol/2,-resol/2,0),Vector3(resol/2,resol/2,0),Vector3(-resol/2,resol/2,0)]
+    sommet= [(0,1,2),(0,2,3)]
+    
+    return Scene([Shape(TriangleSet(points,sommet))])
 
     ###1 fonction maillage sol 
 ## maillage version 2 operationelle 
@@ -120,6 +125,7 @@ def fonction_triangle_mesh(x,y,ecart_rangee,orientation):
 #### another method use to put a distance between two diveds
 
 def type_panneau_orient_univ(params):
+    
     orientation = params.get("orientation").lower()
     type_panneau = params.get("type_panneau")
     longueur_p = params.get("longueur_p")# length according axe row panel
@@ -128,15 +134,20 @@ def type_panneau_orient_univ(params):
     nb_rangee = params.get("nb_rangee")
     ecart_panel = params.get("ecart_panel") # near longueur_p
     ecart_rangee = params.get("ecart_rangee")
-    hauteur_haut_p = params.get("hauteur_haut_p")
-    hauteur_bas_p = params.get("hauteur_bas_p")
+    hauteur=params.get("hauteur_p")
+
     angle_p = params.get("angle_p")
     panel_opacity=params.get("panel_opacity")# semi transparent panel
 
     angle_rad = math.radians(angle_p)
-    hauteur_p = (hauteur_haut_p + hauteur_bas_p) / 2
+    hauteur_p=hauteur
+
     panel_final = []
-    panel_unit = Box(Vector3(longueur_p/2, largeur_p/2, 0.001))
+    
+    points=[Vector3(longueur_p/2,-largeur_p/2,0),Vector3(longueur_p/2,largeur_p/2,0),Vector3(-longueur_p/2,largeur_p/2,0),Vector3(-longueur_p/2,-largeur_p/2,0)]
+    sommet =[(0,1,2),(0,2,3)]
+    panel_unit=TriangleSet(points,sommet)
+    
     poteau_init=[Cylinder(radius=0.05,height=hauteur_p)]
     pot_final=[]
     
@@ -177,8 +188,8 @@ def type_panneau_orient_univ(params):
             for pot in poteau_init:
                 pot_int=Translated(Vector3(x_rot,y_rot, 0),pot)
                 pot_final.append(pot_int)
-    panel_colore = [Shape(panel.geometry, Material(Color3(58,56,56)),id=panel.id)for panel in panel_final]
-    poteau_colore=[Shape(pot_1,Material(Color3(58,56,56))) for pot_1 in pot_final]
+    panel_colore = [Shape(panel.geometry, Material(Color3(0,0,0)),id=panel.id)for panel in panel_final]
+    poteau_colore=[Shape(pot_1,Material(Color3(0,0,0))) for pot_1 in pot_final]
     return Scene(panel_colore),poteau_colore
             
 

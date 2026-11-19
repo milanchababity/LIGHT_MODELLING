@@ -10,9 +10,13 @@ from time import time
 from pathlib import Path
 import datetime
 import json
-from SIGNAUX.MODULES.SIGNALS_FONCTIONS import *
+from SIGNAUX.MODULES.FUNCTIONS_SIGNAUX import *
 from multiprocessing.pool import Pool
 from openalea.caribu.CaribuScene import CaribuScene
+
+
+
+
 
 #importation internals modules
 
@@ -132,21 +136,42 @@ from openalea.caribu.CaribuScene import CaribuScene
 #     print(f"time taken: {t2 - t1:.2f} seconds".format(t2 - t1))
 
 
+def filter_scene (scene):
+    scene_filter=[]
+    for shp in scene:
+        number=shp.id
+        if number != 0:
+            shape=Shape(shp.geometry,id=shp.id)
+            scene_filter.append(shape)
+        else:
+            print("soil")
+    return Scene(scene_filter)
+
+    
+    
+
 if __name__=="__main__":
     log("LOADING PARAMETERS")
     t1=time()
+    
+    dict_meteo={
+    "debut":"2025-09-21",
+    "fin":"2025-09-21",
+    "latitude":46.433331,
+    "longitude":0.116670,
+    "hours":12}
     
     annexe_sud={
     "debut":"2025-09-21",
     "fin":"2025-09-21",
     "tz":"Europe/Paris",
     "freq":"1h",
-    "x_coord_max":0.06,
-    "y_coord_max":0.62,
-    "x_coord_min":1.30,
-    "y_coord_min":-4.74,
-    "x_coord_int":6.77,
-    "y_coord_int":-1.71,
+    "y_coord_max":0.06,
+    "x_coord_max":0.62,
+    "y_coord_min":-1.30,
+    "x_coord_min":-4.74,
+    "y_coord_int":6.77,
+    "x_coord_int":-1.71,
     
     "latitude": 46.433331, # lusginan"
     "longitude": 0.116670} # lusginan
@@ -156,12 +181,12 @@ if __name__=="__main__":
     "fin":"2025-09-21",
     "tz":"Europe/Paris",
     "freq":"1h",
-    "x_coord_max":-0.18,
-    "y_coord_max":-6.77,
-    "x_coord_min":5.20,
-    "y_coord_min":2.26,
-    "x_coord_int":-0.27,
-    "y_coord_int":1.15,
+    "y_coord_max":-0.18,
+    "x_coord_max":-6.77,
+    "y_coord_min":5.20,
+    "x_coord_min":2.26,
+    "y_coord_int":-0.27,
+    "x_coord_int":1.15,
     
     "latitude": 46.433331, # lusginan"
     "longitude": 0.116670} # lusginan
@@ -194,24 +219,64 @@ if __name__=="__main__":
     "ecart_rangee":9.5, # dtistance between two divide(piqué)
     "hauteur_haut_p":4.05, # panel heigth max
     "hauteur_bas_p":3.35, # panel heigth min
-    "panel_opacity":1, # beyon 1 for panel semitransparent
+    "panel_opacity":1, # below 1 for panel semitransparent
     "angle_p":10} # angle beta_p (tilt)
     
     log("SCENE LOGING")
-    HD1_AF=r"PAR_FSPM\Fescue-Alfalfa\Scene\HD1-asso-luz.bgeom"
-    HD2_AF=r"PAR_FSPM\Fescue-Alfalfa\Scene\HD2-asso-luz.bgeom"
+
     LD1_AF=r"PAR_FSPM\Fescue-Alfalfa\Scene\LD1-asso-luz.bgeom"
-    LD2_AF=r"PAR_FSPM\Fescue-Alfalfa\Scene\LD2-asso-luz.bgeom"
+    
+    log("PREPARING INPUTS ALFALFA_FESCUE")
+    LD1_SUD=(LD1_AF,params_panel_norm_sud,"sud",annexe_sud,dict_meteo,"LD1_P_SUD",True,False,"LD1_SUD",0)
+    LD1_EST=(LD1_AF,params_panel_norm_chapeau_est,"est",annexe_est,dict_meteo,"LD1_P_EST",True,False,"LD1_EST",0)
+    LD1_SUD_CONTROL=(LD1_AF,params_panel_norm_sud,"sud",annexe_sud,dict_meteo,"control_SUD",False,True,"LD_CONT_SUD",0)
+    LD1_EST_CONTROL=(LD1_AF,params_panel_norm_chapeau_est,"est",annexe_sud,dict_meteo,"control_EST",False,True,"LD_CONT_EST",0)
+    PARAMS_AF=[LD1_SUD,LD1_EST,LD1_SUD_CONTROL,LD1_EST_CONTROL]
+    
+    log("EXTRACTION RADIATION AT 21 SEPTEMBER AT MIDDAY")
+    with Pool(processes=4) as pool:
+        ALFALFA_SIMULATION= pool.starmap(simulation_on,PARAMS_AF)
+        
+    log("PREPARAING INPUTS WEAT_PEA CANOPY SECUND")
+    
+    WPEA=r"PAR_FSPM\Wheat-Pea\Scene\T2-1-170210.bgeom"
+    
+    log("FILTERING CANOPY")
+    
+    WPEA_SUD=(WPEA,params_panel_norm_sud,"sud",annexe_sud,dict_meteo,"WPEA_P_SUD",True,False,"WP_P_SUD",2)
+    WPEA_EST=(WPEA,params_panel_norm_chapeau_est,"est",annexe_est,dict_meteo,"WPEA_P_EST",True,False,"WP_P_EST",2)
+    WPEA_CONT_SUD=(WPEA,params_panel_norm_sud,"sud",annexe_sud,dict_meteo,"WPEA_CONT_SUD",True,False,"WP_CONT_SUD",2)
+    WPEA_CONT_EST=(WPEA,params_panel_norm_chapeau_est,"est",annexe_est,dict_meteo,"WPEA_CONT_EST",True,False,"WP_CONT_EST",2)
+    
+    PARWPEA=[WPEA_SUD,WPEA_EST,WPEA_CONT_SUD,WPEA_CONT_EST]
+    
+    log("SIMULATION WITH MULTIPROCESSING ON WHEAT PEA")
+    with Pool(processes=4) as pool:
+        WHEAT_PEA_SIMULATION= pool.starmap(simulation_on,PARWPEA)
+        
+    log("PREPARAING INPUTS FESCUE_CLOVER CANOPY THIRD")
+    FESCUE_CLOVER=r"PAR_FSPM\Fescue-Clover\Scene\as2c3.bgeom"
+    
+    log("PREPARING INPUTS FESCUE_CLOVER")
+
+    FES_CLOV_SUD=(FESCUE_CLOVER,params_panel_norm_sud,"sud",annexe_sud,dict_meteo,"FC_P_SUD",True,False,"FC_P_SUD",2)
+    FES_CLOV_EST=(FESCUE_CLOVER,params_panel_norm_chapeau_est,"est",annexe_est,dict_meteo,"FC_P_EST",True,False,"FC_P_EST",2)
+    FES_CLOV_CT_SUD=(FESCUE_CLOVER,params_panel_norm_sud,"sud",annexe_sud,dict_meteo,"FC_CONT_SUD",True,False,"FC_CONT_SUD",2)
+    FES_CLOV_CT_EST=(FESCUE_CLOVER,params_panel_norm_chapeau_est,"est",annexe_est,dict_meteo,"FC_CONT_EST",True,False,"FC_CONT_EST",2)
+    
+    PARFCLOV=[FES_CLOV_SUD,FES_CLOV_EST,FES_CLOV_CT_SUD,FES_CLOV_CT_EST]
+    
+    log("RUN MULTIPROCESSING CANOPY FESCUE CLOVER MIXTURES")
+    
+    with Pool(processes=4) as pool:
+        FECLOV_SIMULATION= pool.starmap(simulation_on,PARFCLOV)
+    log("SIMULATION FINISHED")
+    
+        
 
     
-    log("PARAMS LOADING")
-    params_ALFALFAF=[(HD1_AF,params_panel_norm_sud,params_panel_norm_chapeau_est,0,annexe_sud,annexe_est,"HD1_AF"),(HD2_AF,params_panel_norm_sud,params_panel_norm_chapeau_est,0,annexe_sud,annexe_est,"HD2_AF"),(LD1_AF,params_panel_norm_sud,params_panel_norm_chapeau_est,0,annexe_sud,annexe_est,"LD1_AF"),(LD2_AF,params_panel_norm_sud,params_panel_norm_chapeau_est,0,annexe_sud,annexe_est,"LD2_AF")]
     
-    log("SIMULATION STARTING")
-    with Pool(processes=4) as pool:
-        data_final=pool.starmap(Simulation_signaux, params_ALFALFAF)
-        
-    log("SIMULATION COMPLETED")
+
         
         
 

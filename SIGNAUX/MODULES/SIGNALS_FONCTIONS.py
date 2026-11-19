@@ -15,8 +15,6 @@ from openalea.caribu.plantgl_adaptor import *
 from openalea.caribu.CaribuScene import CaribuScene
 
 
-def log(message):
-    print('{0} {1}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), message), flush=True)
 
 ### transformed can file to scene plantgl
 def can_to_scene(str_file):
@@ -72,24 +70,6 @@ def semis_alfalfa_rc_rs(scene_init, nb_rangee, ecart_rangee, nb_plant, ecart_pla
                     
     return Scene(alfalfa_sowing)
 
-#########################################################################################
-#fonction separated scene to put the same id for each species (step 1)
-def fonction_separation_scene(scene):
-    luz=[]
-    fet=[]
-    scene_final=Scene()
-    for shp in scene:
-        if shp.geometry.getName()=="100000000000":
-            shape_luz=Shape(shp.geometry,id=0)
-            luz.append(shape_luz)
-        else:
-            shape_fet=Shape(shp.geometry,id=1000)
-            fet.append(shape_fet)
-    scene_luz=Scene(luz)
-    scene_fet=Scene(fet)
-    scene_final.add(scene_luz)
-    scene_final.add(scene_fet)
-    return scene_luz,scene_fet,scene_final
 
 # def fonction_separation_scene_rc_rs(scene):
 #     luz=[]
@@ -115,6 +95,26 @@ def fonction_separation_scene(scene):
 
 #step 2 : function creation caribu 
 
+#########################################################################################
+# # fonction separated scene to put the same id for each species (step 1)
+# def fonction_separation_scene(scene):
+#     luz=[]
+#     fet=[]
+#     scene_final=Scene()
+#     for shp in scene:
+#         if shp.geometry.getName()=="100000000000":
+#             shape_luz=Shape(shp.geometry,id=0)
+#             luz.append(shape_luz)
+#         else:
+#             shape_fet=Shape(shp.geometry,id=1000)
+#             fet.append(shape_fet)
+#     scene_luz=Scene(luz)
+#     scene_fet=Scene(fet)
+#     scene_final.add(scene_luz)
+#     scene_final.add(scene_fet)
+#     return scene_luz,scene_fet,scene_final
+
+
 def caribu_runing(scene,light,sky,opt,pattern):
     # caribu diffuse running
     caribu_radiosity_diffus=CaribuScene(scene=scene,light=sky,opt=opt,pattern=pattern)
@@ -127,14 +127,14 @@ def caribu_runing(scene,light,sky,opt,pattern):
 
 #step 3 : function id (when all scene was setting up)  we call this function to forced again id 
 
-def forcing_id_scene(scene):
-    scene_final=[]
-    id_init=0
-    for shape in scene:
-        ob=Shape(shape.geometry,id=id_init)
-        scene_final.append(ob)
-    scene_id_forced=Scene(scene_final)
-    return scene_id_forced
+# def forcing_id_scene(scene):
+#     scene_final=[]
+#     id_init=0
+#     for shape in scene:
+#         ob=Shape(shape.geometry,id=id_init)
+#         scene_final.append(ob)
+#     scene_id_forced=Scene(scene_final)
+#     return scene_id_forced
 
 #step 4 : scaled function to scale down 3d plant mock-up
 def scaled_fonction(scene,factor=0.01):
@@ -143,7 +143,6 @@ def scaled_fonction(scene,factor=0.01):
         scaled_final=Shape(Scaled((factor,factor,factor),obj.geometry),id=obj.id)
         scale_list.append(scaled_final)
     return scale_list
-
 
 #step 5: to rotate scene for some mixtures (wheat-pea)
 def rotation_scene(scene_init):
@@ -214,6 +213,34 @@ def extraction_infinite(scene):
     ymin=BoundingBox(scene).getYMin()
     return (xmin,ymin,xmax,ymax)
 
+# to force the id
+def id_scene_by_height(scene_scaled,id_0_10=0,id_11_20=2000000,id_21_30=3000000):
+    scene_0_10=[]
+    scene_11_20=[]   
+    scene_21=[]
+    scene_final=Scene()
+    for shape in scene_scaled:
+        z_min=BoundingBox(shape).getZMax()
+        z_max=BoundingBox(shape).getZMin()
+        z_mean=(z_min+z_max)/2
+        if z_mean<=0.1:
+            ob=Shape(shape.geometry,id=id_0_10)
+            scene_0_10.append(ob)
+            id_0_10+=1
+        elif z_mean>0.1 and z_mean<=0.20:
+            ob1=Shape(shape.geometry,id=id_11_20)
+            scene_11_20.append(ob1)
+            id_11_20+=1
+        else:
+            ob2=Shape(shape.geometry,id=id_21_30)
+            scene_21.append(ob2)
+            id_21_30+=1
+    scene_1,scene_2,scene_3 = Scene(scene_0_10),Scene(scene_11_20),Scene(scene_21)
+    list_scene=[scene_1,scene_2,scene_3]
+    for element in list_scene:
+        scene_final.add(element)
+    return scene_final
+
 # step 8 : to get the light position (for direct radiation)
 def light_position(doy,heure,latitude,direct_radiation):
     DOY=doy
@@ -231,71 +258,73 @@ def light_position(doy,heure,latitude,direct_radiation):
 
 #step 9: to dataframe the outputs and to make some operations 
 def data_framing(aggegate):
+    #transform dictionary to dataframe
     data_rc_rs =pd.DataFrame({"Triangles":aggegate["RC"]["Eabs"].keys(),
                                 "Valeur_abs_RC":aggegate["RC"]["Eabs"].values(),
                                 "Valeur_Ei_RC":aggegate["RC"]["Ei"].values(),
                                 "Valeur_eabs_RS":aggegate["RS"]["Eabs"].values(),
                                 "Valeur_Ei_RS":aggegate["RS"]["Ei"].values()}).set_index("Triangles")
+    # calculation and operation 
     data_rc_rs["rapport_rc/rs_eabs"]=data_rc_rs["Valeur_abs_RC"]/data_rc_rs["Valeur_eabs_RS"]
     data_rc_rs["rapport_Ei"]=data_rc_rs["Valeur_Ei_RC"]/data_rc_rs["Valeur_Ei_RS"]
     data_rc_rs["rapport_RS/RC_abs"]=data_rc_rs["Valeur_eabs_RS"]/data_rc_rs["Valeur_abs_RC"]
     data_rc_rs["rapport_RS/RC_Ei"]=data_rc_rs["Valeur_Ei_RS"]/data_rc_rs["Valeur_Ei_RC"]
     return data_rc_rs
 
-# #step 10 : scene constructor
-# def constructor_scene(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte):
-#     canopy={0:"alfalfa-fescue",1:"wheat-pea",2:"fescue-clover"}
+# step 10: to duplicate 3D plant Muck-up ( forcing id )
+def putting_scene(scene_scaled_final,annexe):
+    x_coord_max=annexe.get("x_coord_max")
+    y_coord_max=annexe.get("y_coord_max")
+    x_coord_min=annexe.get("x_coord_min")
+    y_coord_min=annexe.get("y_coord_min")
+    # x_coord_int=annexe.get("x_coord_int")
+    # y_coord_int=annexe.get("y_coord_int")
+    
+    """max_0_10 : 1000000000
+       max_11_20: 2000000000
+       max_21: 3000000000
+       
+       min_0_10: 1000000
+       min_11_20:2000000
+       min_21:3000000
 
-#     scene_init=Scene(scene_path)
-#     scene_id_force=forcing_id_scene(scene_init)
-#     scene_scaled=color(scene_id_force,factor=0.01)
+    Returns:
+        _type_: _description_
+    """
+    list_max=[]
+    list_min=[]
+    list_final=[]
     
-#     if canopy.get(mixte)==0:
-#         scene_sud=scene_scaled
-#         scene_est=rotation_scene(scene_scaled)
-#     elif canopy.get(mixte)==2:
-#         scene_centrated=centre_scene_scaled(scene_scaled) 
-#         scene_sud=scene_centrated
-#         scene_est=rotation_scene(scene_centrated)
-#     elif canopy.get(mixte)==1:
-#         scene_centrated=centre_scene_scaled(scene_scaled)
-#         scene_sud=rotation_scene(scene_scaled)
-#         scene_est=scene_centrated
-    
-#     #merge de scene  
-#     scene_panel_sud,_=type_panneau_orient_univ(dicco_paneau_sud)
-#     scene_panel_est,_=type_panneau_orient_univ(dicco_paneau_est)
-    
-#     scene_final_sud=Scene()
-#     scene_final_sud.add(scene_panel_sud)
-#     scene_final_sud.add(scene_sud)
-    
-#     scene_final_est=Scene()
-#     scene_final_est.add(scene_panel_est)
-#     scene_final_est.add(scene_est)
-    
-#     #saving scenes with and without panel
-#     scene_final_sud.save("scene_final_sud.bgeom")
-#     scene_final_est.save("scene_final_est.bgeom")
-#     scene_sud.save("scene_sud.bgeom")   
-#     scene_est.save("scene_est.bgeom")
-    
-#     infi_sud_with_panel,infi_est_with_panel,infi_sud_no_panel,infi_est_no_panel=extraction_infinite(scene_final_sud),extraction_infinite(scene_final_est),extraction_infinite(scene_sud),extraction_infinite(scene_est)
-#     # getting optique properties
-#     optique_panel_sud =get_optical_proprieties(infi_sud_with_panel,0.1,0.07,"RC",0.41,0.43,"RS",scene_panel_sud)
-#     optique_panel_est=get_optical_proprieties(infi_est_with_panel,0.1,0.07,"RC",0.41,0.43,"RS",scene_panel_est)
-#     optique_no_panel_sud=get_optical_proprieties(infi_sud_no_panel,0.1,0.07,"RC",0.41,0.43,"RS",None)
-#     optique_no_panel_est=get_optical_proprieties(infi_est_no_panel,0.1,0.07,"RC",0.41,0.43,"RS",None)
-    
-#     return [scene_final_sud,scene_final_est,scene_sud,scene_est],[infi_sud_with_panel,infi_est_with_panel,infi_sud_no_panel,infi_est_no_panel],[optique_panel_sud,optique_panel_est,optique_no_panel_sud,optique_no_panel_est]
+    for shape in scene_scaled_final:
+        ob=Shape(Translated(Vector3(x_coord_max,y_coord_max,0),shape.geometry),id=shape.id)
+        list_max.append(ob)
+        
+        ob1=Shape(Translated(Vector3(x_coord_min,y_coord_min,0),shape.geometry),id=shape.id)
+        list_min.append(ob1)
 
-#step 10 : scene constructor
+        # ob2=Shape(Translated(Vector3(x_coord_int,y_coord_int,0),shape.geometry),id=shape.id)
+        # list_final.append(ob2)
+        # id_scene +=1
+    
+    scene_max=Scene(list_max)
+    scene_min=Scene(list_min)
+    
+    scene_max_id_forced=id_scene_by_height(scene_max,id_0_10=0,id_11_20=2000000,id_21_30=3000000)
+    scene_min_id_forced=id_scene_by_height(scene_min,id_0_10=1000000000,id_11_20=2000000000,id_21_30=3000000000)
+    scene_tot=Scene()
+    scene_tot.add(scene_max_id_forced)
+    scene_tot.add(scene_min_id_forced)
+    
+    return scene_tot
+
+#step 11 : scene construction [scene],[infinites patterns],[properties opticals] these object will be using for caribu run
+
 def scene_signal(scene_path,dicco_panneau_sud,dicco_paneau_est,mixte,annexe_sud,annexe_est):
     
     scene_init=Scene(scene_path)
-    scene_id_force=forcing_id_scene(scene_init)
-    scene_scaled=color(scene_id_force,factor=0.01)
-    
+    scene_scaled=scaled_fonction(scene_init,0.01)
+    # scene_id_force=forcing_id_scene(scene_init)
+    # scene_scaled=color(scene_id_force,factor=0.01)
     if mixte == 0:
         scene_sud=scene_scaled
         scene_est=rotation_scene(scene_scaled)
@@ -308,11 +337,11 @@ def scene_signal(scene_path,dicco_panneau_sud,dicco_paneau_est,mixte,annexe_sud,
         scene_sud=rotation_scene(scene_scaled)
         scene_est=scene_centrated
     
-    scene_sud_final=putting_scene(scene_sud,annexe_sud)
-    scene_est_final=putting_scene(scene_est,annexe_est)
+    scene_sud_final=putting_scene(scene_sud,annexe_sud) # duplicate mock up with id different along 3 positions
+    scene_est_final=putting_scene(scene_est,annexe_est) # duplicate mock -up 
 
-    panel_sud,_=type_panneau_orient_univ(dicco_panneau_sud)
-    panel_est,_=type_panneau_orient_univ(dicco_paneau_est)
+    panel_sud,_=type_panneau_orient_univ(dicco_panneau_sud) # 4 ranges of panels
+    panel_est,_=type_panneau_orient_univ(dicco_paneau_est) # 4 ranges of panels
     
     scene_with_panel_sud=Scene()
     scene_with_panel_est=Scene()
@@ -336,14 +365,14 @@ def scene_signal(scene_path,dicco_panneau_sud,dicco_paneau_est,mixte,annexe_sud,
     
     return [scene_with_panel_sud,scene_with_panel_est,scene_no_panel_sud,scene_no_panel_est],\
         [infi_sud_with_panel,infi_est_with_panel,infi_sud_no_panel,infi_est_no_panel],\
-        [optique_panel_sud,optique_panel_est,optique_no_panel_sud,optique_no_panel_est]\
+        [optique_panel_sud,optique_panel_est,optique_no_panel_sud,optique_no_panel_est]
 
-
+#step 12 : Data treatment and analysis
 def computation_data_agg(aggLD22,aggLD21,suffixe,caribuscene,name):
     
     data_direct=data_framing(aggLD22)
     data_diffuse=data_framing(aggLD21)
-    data_final=data_direct+ data_diffuse
+    data_final= data_direct+ data_diffuse
     
     agg_final = {"RC": 
         {"Eabs": data_final["Valeur_abs_RC"].to_dict(),"Ei": data_final["Valeur_Ei_RC"].to_dict()},
@@ -366,33 +395,7 @@ def computation_data_agg(aggLD22,aggLD21,suffixe,caribuscene,name):
     scene_ratio_rc_rs.save(f"SCENE_RC/RS_{name}.bgeom")
     return data_final
     
-    
-def putting_scene(scene_scaled_final,annexe):
-    x_coord_max=annexe.get("x_coord_max")
-    y_coord_max=annexe.get("y_coord_max")
-    x_coord_min=annexe.get("x_coord_min")
-    y_coord_min=annexe.get("y_coord_min")
-    x_coord_int=annexe.get("x_coord_int")
-    y_coord_int=annexe.get("y_coord_int")
-    
-    scene_final_max=[]
-    scene_final_min=[]
-    scene_final_int=[]
-    for shape in scene_scaled_final:
-        ob=Shape(Translated(Vector3(x_coord_max,y_coord_max,0),shape.geometry),id=shape.id)
-        scene_final_max.append(ob)
-        ob1=Shape(Translated(Vector3(x_coord_min,y_coord_min,0),shape.geometry),id=shape.id)
-        scene_final_min.append(ob1)
-        ob2=Shape(Translated(Vector3(x_coord_int,y_coord_int,0),shape.geometry),id=shape.id)
-        scene_final_int.append(ob2)
-        
-    scene_tot=Scene()
-    scene_tot.add(Scene(scene_final_max))
-    scene_tot.add(Scene(scene_final_min))   
-    scene_tot.add(Scene(scene_final_int))
-    return scene_tot
-
-
+    # step 12 : simulation function use in multiprocess 
 def Simulation_signaux(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe_sud,annexe_est,name):
     latitude =annexe_est.get("latitude")
     longitude= annexe_est.get("longitude")
@@ -402,9 +405,9 @@ def Simulation_signaux(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe
     scene,pattern,optical=scene_signal(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe_sud,annexe_est)
     data_meteo=recup_meteo.recup_direct_diffuse(latitude,longitude,debut,fin)
     
-    print("name =", name)
-    print("latitude =", latitude)
-    print("longitude =", longitude)
+    # print("name =", name)
+    # print("latitude =", latitude)
+    # print("longitude =", longitude)
 
     data_select=data_meteo[data_meteo["decimal_hours"]==12]
     direct_radiation=data_select["direct_radiation"].values[0]
@@ -426,6 +429,7 @@ def Simulation_signaux(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe
     agg_diffus_est_nop,agg_direct_est_nop,_=caribu_runing(scene=scene[3],light=light_direct,sky=sky,opt=optical[3],pattern=pattern[3])
     
     # computation data 
+    
     scene_sud_panel=computation_data_agg(agg_diffus_sud,agg_direct_sud,"panel_sud",mapper,name)
     scene_est_panel=computation_data_agg(agg_diffus_est,agg_direct_est,"panel_est",mapper,name)
     scene_sud_no_panel=computation_data_agg(agg_diffus_sud_nop,agg_direct_sud_nop,"nop_panel_sud",mapper,name)
@@ -433,6 +437,34 @@ def Simulation_signaux(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe
     
     return scene_sud_panel,scene_est_panel,scene_sud_no_panel,scene_est_no_panel
 ###
+
+def get_direct_diffuse_value(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe_sud,annexe_est,name):
+    latitude =annexe_est.get("latitude")
+    longitude= annexe_est.get("longitude")
+    debut=annexe_est.get("debut")
+    fin=annexe_est.get("fin")
+    
+    scene,pattern,optical=scene_signal(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe_sud,annexe_est)
+    data_meteo=recup_meteo.recup_direct_diffuse(latitude,longitude,debut,fin)
+    
+    return scene, pattern,optical,data_meteo
+
+def obtain_light_sky(data_meteo):
+    data_select=data_meteo[data_meteo["decimal_hours"]==12]
+    direct_radiation=data_select["direct_radiation"].values[0]
+    diffuse_radiation=data_select["diffuse_radiation"].values[0]
+    doy=data_select["day_of_year"].values[0]
+    heure_dec=data_select["decimal_hours"].values[0]
+    return direct_radiation,diffuse_radiation,doy,heure_dec
+
+def run_and_mapping(loc,scene,light,sky,opt,pattern,name,orientation):
+    agg_diffus,agg_direct, mapper=caribu_runing(scene[loc],light=light,sky=sky,opt=opt[loc],pattern=pattern[loc])
+    data_compute=computation_data_agg(agg_diffus,agg_direct,orientation,mapper,name)
+    return data_compute
+
+
+
+
 
 #light vegemanager
 
@@ -459,3 +491,13 @@ def Simulation_signaux(scene_path,dicco_paneau_sud,dicco_paneau_est,mixte,annexe
 # s2v_output(scene_3)
 
 
+# ################
+# scene=Scene(r"PAR_FSPM\Fescue-Alfalfa\Scene\HD2-asso-luz.bgeom")
+# scene_scaled=Scene(scaled_fonction(scene,0.01))
+# Viewer.display(scene_scaled)
+
+## separated by height shape 
+
+# we use this line of code to force the id of each shape in the scene in order to idenfify the heigth oh shape by id 
+
+    

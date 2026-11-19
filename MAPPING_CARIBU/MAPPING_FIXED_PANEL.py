@@ -1,11 +1,8 @@
-from openalea.caribu.CaribuScene import CaribuScene
-
+from openalea.caribu.CaribuScene import CaribuScene,domain_mesh
 from openalea.plantgl.all import *
-from MAPPING_CARIBU.MODULE_PANEL_NORMAL import scene_modelling_normal
 import matplotlib.pyplot as plt
 from MAPPING_CARIBU import MODULE_MAPPING
 import pickle
-
 import numpy as np
 import math
 from matplotlib.patches import Rectangle
@@ -16,17 +13,11 @@ import pandas as pd
 import datetime
 from multiprocessing import Pool
 import pickle
+import os 
 
 
 def log(message):
     print('{0} {1}'.format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), message), flush=True)
-### information statut
-
-
-### functions
-
-
-# extrate coordonate scene_panels
 
 
 # fonction extraction x,y,z of scene 
@@ -79,16 +70,17 @@ def soil_mesh_triangle(ecart_p,ecart_rang,long_x_p,larg_y_p,orientation="sud",re
     points =[Vector3(-resol_x/2,-resol_y/2,0),Vector3(resol_x/2,-resol_y/2,0),Vector3(resol_x/2,resol_y/2,0),Vector3(-resol_x/2,resol_y/2,0)]
     sommet=[(0,1,2),(0,2,3)]
     triangle_unit=TriangleSet(points,sommet)
+    
     if orientation =="sud":
-        nb_pixel_x=math.ceil((ecart_rang+larg_y_p)/resol)
+        nb_pixel_x=math.ceil((ecart_rang + larg_y_p)/resol)
         nb_pixel_y=math.ceil((ecart_p + long_x_p)/resol)
 
     else:
         nb_pixel_x=math.ceil((ecart_p + long_x_p)/resol)
-        nb_pixel_y=math.ceil((ecart_rang+larg_y_p)/resol)
+        nb_pixel_y=math.ceil((ecart_rang + larg_y_p)/resol)
     # central mesh
-    pos_x_depart=-(nb_pixel_x-1)*resol_x/2
-    pos_y_depart=-(nb_pixel_y-1)*resol_y/2
+    pos_x_depart=-(nb_pixel_x-1)* resol_x/2
+    pos_y_depart=-(nb_pixel_y-1)* resol_y/2
     id_sol=0
     maillage=[]
     for i in range(nb_pixel_x):
@@ -102,242 +94,142 @@ def soil_mesh_triangle(ecart_p,ecart_rang,long_x_p,larg_y_p,orientation="sud",re
     return Scene(maillage_col)
 
 
+def FIXED_SIMULATION_V1(params,dict_soil,dict_date,name):
+    log("STEP 1/9: CHARGING PARAMETERS SIMULATION")
     
-def plotting_outpluts(params,dict_soil,dict_date,name):
-    log("loading parameters")
-    
-    # orientation = params.get("orientation").lower()
-    # type_panneau = params.get("type_panneau")
-    # longueur_p = params.get("longueur_p")# length according axe row panel
-    # largeur_p = params.get("largeur_p")# length according axe between row
-    # nb_panel = params.get("nb_panel")
-    # nb_rangee = params.get("nb_rangee")
-    # ecart_panel = params.get("ecart_panel") # near longueur_p
-    # ecart_rangee = params.get("ecart_rangee")
-    # hauteur_haut_p = params.get("hauteur_haut_p")
-    # hauteur_bas_p = params.get("hauteur_bas_p")
-    # angle_p = params.get("angle_p")
-    panel_opacity=params.get("panel_opacity")# semi transparent panel
-    
-    ecart_panel_sol=dict_soil.get("ecart_panel")
-    ecart_rangee_sol=dict_soil.get("ecart_rangee")
-    longueur_panel=dict_soil.get("longeur_panel")
-    largeur_panel=dict_soil.get("largeur_panel")
-    orientation_sol=dict_soil.get("orientation")
+    panel_opacity=params.get("panel_opacity")
     resolution=dict_soil.get("resolution")
     
-    resolution=dict_soil.get("resolution")
     debut=dict_date.get('debut')
     fin=dict_date.get("fin")
     tz=dict_date.get("tz")
     freq=dict_date.get("freq")
     latitude=dict_date.get("latitude")
     longitude=dict_date.get('longitude')
-
     
-    log("soil mesh creation")
-    scene_soil=soil_mesh_triangle(ecart_panel_sol,ecart_rangee_sol,longueur_panel,largeur_panel,orientation_sol,resolution)
+    
+    nb_panel=params.get("nb_panel")
+    nb_rangee=params.get("nb_rangee")
+    ecart_rangee=params.get("ecart_rangee")
+    orientation=params.get("orientation")
+    largeur_p=params.get("largeur_p")
+    
+    
+    log("STEP 2/9: SOIL AND PANEL SCENE CREATION")
+    scene_soil= MODULE_MAPPING.soil_mesh_triangleV2(nb_panel,nb_rangee,ecart_rangee,largeur_p,orientation,resolution)
     scene_panel_geom,_=scene_modelling_normal.type_panneau_orient_univ(params)
     
-    log("panel scene creation")
-    scene_panel=MODULE_MAPPING.get_panels(scene_panel_geom)
-    
-    
-    
     direct=True if panel_opacity==1 else False # we ue raycasting when opacity==0 and mixed radiosity (reflectance and transmittance when opacity lower than 1)
-    
-    
-    scene_caribu=Scene([scene_panel,scene_soil])
-    # lightcalculated=recup_meteo.light_caribu(debut=debut,fin=fin,freq=freq,tz=tz,latitude=latitude)
-    #data_meteo=recup_meteo.dayof_year_extraction(debut,fin,freq,tz)
+    scene_caribu=Scene([scene_panel_geom,scene_soil])
+    pattern_pv= (BoundingBox(scene_soil).getXMin(),BoundingBox(scene_soil).getYMin(),BoundingBox(scene_soil).getXMax(),BoundingBox(scene_soil).getYMax())
+
     data_caribu=[]
-    diffus_caribu=[]
-    log("importation light position and data radiation")
-    
+  
+    log("STEP 3/9: DATA METEO FORECASTING")
     day_of_year_len=recup_meteo.compute_day_of_years(debut,fin)
     data_meteo_rd=recup_meteo.recup_direct_diffuse(latitude,longitude,debut,fin)
     
-    # mean_Rd_diffuse=data_meteo_rd["diffuse_radiation"].mean()
     cumul_Rd_diffuse=data_meteo_rd["diffuse_radiation"].sum()
     
-    log("getting optics parameters")
+    log("STEP 4/9: OPTICALS PARAMETERS CONFIGURATIONS")
     opt_config = {"default_band": {}}
+    
     for z in scene_soil:
         opt_config["default_band"][z.id] = (0.06, 0)
  
     for p in scene_panel_geom:
         opt_config["default_band"][p.id] = (0.06, 1 - panel_opacity)
 
-    log("caribu on diffuse radiation")
+    log("STEP 5/9: SIMULATION DIFFUSE RADIATION")
     sky=recup_meteo.modelize_sky(1)
-    diffus=CaribuScene(scene=scene_caribu,light=sky,opt=opt_config)
-    _,agg_diffus=diffus.run(simplify=True, infinite=False,direct=direct)
+    diffus=CaribuScene(scene=scene_caribu,light=sky,opt=opt_config,pattern=pattern_pv)
+    _,agg_diffus=diffus.run(simplify=True, infinite=True,direct=direct)
     data_diffuse_calculate=pd.DataFrame({
                 "Triangles":agg_diffus["Ei"].keys(),
-                #"times":[doy.date_time]*len(agg_diffus["Ei"].keys()),
                 "values_Ei_diffus":agg_diffus["Ei"].values()
             }).set_index("Triangles")
-    diffus_caribu.append(data_diffuse_calculate)
+ 
+    log("STEP 6/9: COMPUTATION DIFFUSE RADIATIONS")
+    data_diffuse_calculate["Ei_sum"] = (data_diffuse_calculate["values_Ei_diffus"] * cumul_Rd_diffuse) 
+    datacaribu_diffuse_sum = (data_diffuse_calculate.groupby("Triangles")["Ei_sum"].sum().to_frame(name="Values_Ei_finale"))
     
-    # for ind,doy in enumerate(tqdm(data_meteo_rd.itertuples(),total=len(data_meteo_rd))): 
-    #     sky=recup_meteo.modelize_sky(doy.diffuse_radiation)
-    #     diffus=CaribuScene(scene=scene_caribu,light=sky)
-    #     _,agg_diffus=diffus.run(simplify=True, infinite=False)
-    #     data_diffuse_calculate=pd.DataFrame({
-    #             "Triangles":agg_diffus["Ei"].keys(),
-    #             "times":[doy.date_time]*len(agg_diffus["Ei"].keys()),
-    #             "values_Ei_diffus":agg_diffus["Ei"].values()
-    #         }).set_index("Triangles")
-    #     diffus_caribu.append(data_diffuse_calculate)
-        
-    log("concatenate diffuse radiation")
-    #data_diffus=pd.concat(diffus_caribu,axis=0,ignore_index=False,join="outer")
-    data_diffuse_calculate["Ei_sum"]=data_diffuse_calculate["values_Ei_diffus"]*cumul_Rd_diffuse
-    # data_diffuse_calculate["Ei_mean"]=data_diffuse_calculate["values_Ei_diffus"]*mean_Rd_diffuse
-    
-    log("converting diffus values")
-    datacaribu_diffuse_sum = (data_diffuse_calculate.groupby("Triangles")["Ei_sum"].sum().mul(0.0036).to_frame(name="Values_Ei_finale"))
-    # datacaribu_diffuse_mean = (data_diffuse_calculate.groupby("Triangles")["Ei_mean"].sum().mul(0.0036).to_frame(name="Values_Ei_finale"))
-    
-    log("direct running ")
-    for ind,doy in enumerate(tqdm(data_meteo_rd.itertuples(),total=len(data_meteo_rd))): 
+    log("STEP 7/9: COMPUTATION DIRECT RADIATION ")
+    for _ , doy in enumerate(tqdm(data_meteo_rd.itertuples(),total=len(data_meteo_rd))): 
         light_caribu,_,_=recup_meteo.light_caribu(day_of_year=doy.day_of_year,heure_decimaux=doy.decimal_hours,latitude=latitude,intensity=doy.direct_radiation,diffuse=False)
         if light_caribu is not None:
-            cs=CaribuScene(scene_caribu,light=[light_caribu],opt=opt_config)
-            _,agg=cs.run(infinite=False, simplify=True, direct=direct)
+            cs=CaribuScene(scene_caribu,light=[light_caribu],opt=opt_config,pattern=pattern_pv)
+            _,agg=cs.run(infinite=True, simplify=True, direct=direct)
             dataframe_caribu=pd.DataFrame({
                 "Triangles":agg["Ei"].keys(),
                 "horaire":[doy.date_time]*len(agg["Ei"].keys()),
                 "values_Ei":agg["Ei"].values()
             }).set_index("Triangles")
-            data_caribu.append(dataframe_caribu)         
-    ## concatenate results 
-    
-    
-    log("computing values direct_radiation ")
-    data_extract=pd.concat(data_caribu,axis=0,join="outer",ignore_index=False)
-    ##add values 
-    log("caclulation of sum values Ei (direct + diffuse radiation) ")
-    datacaribu_final_sum = (data_extract.groupby("Triangles")["values_Ei"]).sum().mul(0.0036).to_frame(name="values_Ei")
-    
-    log("concat direct + diffuse")
+            data_caribu.append(dataframe_caribu)  
+            
+    data_extract=pd.concat(data_caribu,axis=0,join="outer",ignore_index=False)  
+    datacaribu_final_sum = (data_extract.groupby("Triangles")["values_Ei"]).sum().to_frame(name="values_Ei") 
     data_caribu_direct_diffus_sum=pd.concat([datacaribu_final_sum,datacaribu_diffuse_sum],axis=1,join="outer",ignore_index=False)
-    # data_caribu_direct_diffus_mean=pd.concat([datacaribu_final_sum,datacaribu_diffuse_mean],axis=1,join="outer",ignore_index=False)
-    
-    data_caribu_direct_diffus_sum = data_caribu_direct_diffus_sum.reset_index()
-    # data_caribu_direct_diffus_mean= data_caribu_direct_diffus_mean.reset_index()
-    
-    log("somming direct + diffuse radiation")
-    
-    data_caribu_direct_diffus_sum["Ei_total_sum"]=(data_caribu_direct_diffus_sum["values_Ei"] + data_caribu_direct_diffus_sum["Values_Ei_finale"])/len(day_of_year_len)
-    # data_caribu_direct_diffus_mean["Ei_total_mean"]=(data_caribu_direct_diffus_mean["values_Ei"] + data_caribu_direct_diffus_mean["Values_Ei_finale"])/len(day_of_year_len)
-    
-    # data_caribu_direct_diffus["Ei_total_sum"]=data_caribu_direct_diffus["values_Ei"] + data_caribu_direct_diffus["Values_Ei_finale"]
-    # data_caribu_direct_diffus["Ei_total_mean"]=(data_caribu_direct_diffus["values_Ei"] + data_caribu_direct_diffus["Values_Ei_finale"])/len(day_of_year_len)
-    
-    log("saving dataframe")
-    
-    data_caribu_direct_diffus_sum.to_csv("data_caribu.csv")
-    scene_save=cs.scene.generate_scene(None)
-    scene_save.save("caribuscene.bgeom")
+    data_caribu_direct_diffus_sum = data_caribu_direct_diffus_sum.reset_index() 
+    data_caribu_direct_diffus_sum["Ei_total_sum"]=(data_caribu_direct_diffus_sum["values_Ei"] + data_caribu_direct_diffus_sum["Values_Ei_finale"])/len(day_of_year_len)   
 
-    log("saving data on computer ")
+    log("STEP 8/9: SIMULATION DIRECT AND DIFFUSE CONTROL SPOT")
+    scene_control=scene_modelling_normal.scene_consrtructor_contrl(1)
+    opt_conf_cont={"default_band":{scene_control[0].id:(0.06,0)}}
+    pattern_contr=(BoundingBox(scene_control).getXMin(),BoundingBox(scene_control).getYMin(),BoundingBox(scene_control).getXMax(),BoundingBox(scene_control).getYMax())
+    diffuse_control=CaribuScene(scene=scene_control,light=sky,opt=opt_conf_cont,pattern=pattern_contr)
+    _,agg_control=diffuse_control.run(simplify=True,infinite=True,direct=True)
+    dataframe_control_diffuse=pd.DataFrame({
+                "Triangles":agg_control["Ei"].keys(),
+                "values_Ei_diffus":agg_control["Ei"].values()
+            }).set_index("Triangles")
+    
+    dataframe_control_diffuse["diffuse_radiation_value"]=(dataframe_control_diffuse["values_Ei_diffus"] * cumul_Rd_diffuse)/len(day_of_year_len)
+    
+    data_control_direct=[]
 
+    for _,doy in enumerate(tqdm(data_meteo_rd.itertuples(),total=len(data_meteo_rd))): 
+        light_caribu,_,_=recup_meteo.light_caribu(day_of_year=doy.day_of_year,heure_decimaux=doy.decimal_hours,latitude=latitude,intensity=doy.direct_radiation,diffuse=False)
+        if light_caribu is not None:
+            control_direct=CaribuScene(scene_control,light=[light_caribu],opt=opt_conf_cont,pattern=pattern_contr)
+            _,agg_cont_direct=control_direct.run(infinite=True, simplify=True, direct=True)
+            dataframe_caribu_cont=pd.DataFrame({
+                "Triangles":agg_cont_direct["Ei"].keys(),
+                "horaire":[doy.date_time]*len(agg_cont_direct["Ei"].keys()),
+                "values_Ei":agg_cont_direct["Ei"].values()
+            }).set_index("Triangles")
+            data_control_direct.append(dataframe_caribu_cont)
+            
+    log("STEP 9/9: COMPUTING OUTPUTS SIMULATION")
     triangles_,id_geom,_,_,_= cs.as_primitive()
     
-    with open(f"MAPPING_CARIBU\\PKL_FILE\\triangle_prim_{name}.pkl","wb") as f:
-        pickle.dump(triangles_,f)
-    with open(f"MAPPING_CARIBU\\PKL_FILE\\id_primitive_{name}.pkl", "wb") as f:
-        pickle.dump(id_geom,f)
+    data_direct_cont=pd.concat(data_control_direct,axis=0,join="outer",ignore_index=False)
+    data_direct_cont_sum=(data_direct_cont.groupby("Triangles")["values_Ei"].sum().to_frame(name="values_Ei_control"))
+    data_cont_final=pd.concat([data_direct_cont_sum,dataframe_control_diffuse],axis=1,join="outer",ignore_index=False)
+    data_cont_final["values_totale"]=(data_cont_final["values_Ei_control"] + data_cont_final["diffuse_radiation_value"])/ len(day_of_year_len)
     
-    scene_caribu.save(f"MAPPING_CARIBU\\bgeom_USEFUL\\scene_{name}.bgeom")
+    scene_caribu.save("FIXED_PANEL.bgeom")
 
-    MODULE_MAPPING.mapping_2D (dataframe_panda=data_caribu_direct_diffus_sum,primitive_tri=triangles_,id_primitive=id_geom,scene_save=scene_caribu,name=name)
-    data_caribu_direct_diffus_sum.to_csv(f"MAPPING_CARIBU\\RAW_CSV\\data_{name}.csv")
-    log("mapping done successfully")
+    # CREATE 3D SCENE FOR MAPPING 
+    MODULE_MAPPING.mapping_2D(dataframe_panda=data_caribu_direct_diffus_sum,data_contr=data_cont_final,primitive_tri=triangles_,id_primitive=id_geom,scene_save=scene_caribu,name=name)
+    
+    log(" SIMULATION SUCCESSFULLY")
+    
+    data_caribu_direct_diffus_sum.to_csv(f"MAPPING_CARIBU\\RAW_CSV\\{name}.csv")
+
     return data_caribu_direct_diffus_sum
 
-###### clusterring ombrage 
 
-
-# params_panel_norm_sud={
-#     "orientation":"sud",
-#     "type_panneau":"normal",
-#     "longueur_p":3.54, ### panel width
-#     "largeur_p":3.47,# panel length
-#     "resolution_p":0.4, # for the mesh when use mesh panel fonction
-#     "nb_panel":4, # the standard for simulation
-#     "nb_rangee":4, # the standard for simulation
-#     "ecart_panel":3.64,# about panel width to concatenate two panels
-#     "ecart_rangee":9.5, # dtistance between two divide(piqué)
-#     "hauteur_haut_p":4.05, # panel heigth max
-#     "hauteur_bas_p":3.35, # panel heigth min
-#     "panel_opacity":1, # beyon 1 for panel semitransparent
-#     "angle_p":10} # angle beta_p (tilt)
-
-
-# dict_soil_test_sud={
-#     "ecart_panel":20,
-#     "ecart_rangee":25,
-#     "longeur_panel":1,
-#     "largeur_panel":9,
-#     "orientation":"sud",
-#     "resolution":0.5,
-#     "panel_opacity":1}
-
-# log("loading date for simulation")
-# dict_date_test_mai={
-#     "debut":"2025-09-01",
-#     "fin":"2025-09-02",
-#     "tz":"Europe/Paris",
-#     "freq":"1h",
-#     "latitude": 43.34,
-#     "longitude": 0.122}
-
-
-
-# ajour = plotting_outpluts(params_panel_norm_sud,dict_soil_test_sud,dict_date_test_mai,"normal_sud")
-
-# def worker_scene(dict_panel,id_panels,dict_soil,dict_date,name):
-#     scene_panel,_=scene_modelling_normal.type_panneau_orient_univ(dict_panel)
-#     plotting_outpluts(scene_panel,id_panels=id_panels,dict_soil=dict_soil,dict_date=dict_date,name=name)
-
-# s=Scene(r"caribuscene.bgeom")
-# Viewer.display(s)
-# path_est = Scene(r"MAPPING_CARIBU\OUTPUTS_MAPPING\scene_normal_EST_5mn.bgeom")
-# Viewer.display(path_est)
-# scene_soil=soil_mesh_triangle(20,25,1,9,"est",0.5)
-# scene_panel=MODULE_MAPPING.get_panels(path_est)
-# scene_final=Scene()
-# scene_final.add(scene_soil)
-# scene_final.add(scene_panel)
-# scene_caribu=Scene([scene_panel,scene_soil])
-# Viewer.display(scene_final)
 
 
 if __name__=="__main__":
-    log("loading soil mesh")
-    
-    dict_soil_test_est={
-    "ecart_panel":20,
-    "ecart_rangee":35,
-    "longeur_panel":4,
-    "largeur_panel":9,
-    "orientation":"est",
-    "resolution":0.5,
-    "panel_opacity":1}
-    
-    dict_soil_test_sud={
-    "ecart_panel":20,
-    "ecart_rangee":25,
-    "longeur_panel":1,
-    "largeur_panel":9,
-    "orientation":"sud",
-    "resolution":0.5,
-    "panel_opacity":1}
 
+    dict_soil_st ={
+        "nb_panel":4,
+        "nb_rangee":4,
+        "largeur_panel":3.54,
+        "orientation":"est",
+        "resolution":0.5}
 
-    log("loading date for simulation")
     dict_date_test_mai={
     "debut":"2025-06-25",
     "fin":"2025-06-25",
@@ -346,71 +238,64 @@ if __name__=="__main__":
     "latitude": 46.433331, # lusginan"
     "longitude": 0.116670} # lusginan
     
-    log("loading panel parameters")
-    
     params_panel_norm_sud={
     "orientation":"sud",
     "type_panneau":"normal",
-    "longueur_p":3.54, ### panel width
+    "longueur_p":3.2, ### panel width
     "largeur_p":3.47,# panel length
     "resolution_p":0.4, # for the mesh when use mesh panel fonction
     "nb_panel":4, # the standard for simulation
     "nb_rangee":4, # the standard for simulation
-    "ecart_panel":3.64,# about panel width to concatenate two panels
+    "ecart_panel":3.2,# about panel width to concatenate two panels
     "ecart_rangee":9.5, # dtistance between two divide(piqué)
-    "hauteur_haut_p":4.05, # panel heigth max
-    "hauteur_bas_p":3.35, # panel heigth min
+    "hauteur_p":3.25,
     "panel_opacity":1, # beyon 1 for panel semitransparent
     "angle_p":10} # angle beta_p (tilt)
-    
     
     params_panel_norm_chapeau_est={
     "orientation":"est",
     "type_panneau":"chapeau",
-    "longueur_p":3.54, ### panel width
+    "longueur_p":3.2, ### panel width
     "largeur_p":3.47,# panel length
     "resolution_p":0.4, # for the mesh when use mesh panel fonction
     "nb_panel":4, # the standard for simulation
     "nb_rangee":4, # the standard for simulation
-    "ecart_panel":3.64,# about panel width to concatenate two panels
+    "ecart_panel":3.2,# about panel width to concatenate two panels
     "ecart_rangee":9.5, # dtistance between two divide(piqué)
-    "hauteur_haut_p":4.05, # panel heigth max
-    "hauteur_bas_p":3.35, # panel heigth min
+    "hauteur_p":3.25,
     "panel_opacity":1, # beyon 1 for panel semitransparent
     "angle_p":10} # angle beta_p (tilt)
     
     params_panel_ajoures_normal_sud={
     "orientation":"sud",
     "type_panneau":"normal",
-    "longueur_p":3.54, ### panel width
+    "longueur_p":3.2, ### panel width
     "largeur_p":3.47,# panel length
     "resolution_p":0.4, # for the mesh when use mesh panel fonction
     "nb_panel":4, # the standard for simulation
     "nb_rangee":4, # the standard for simulation
-    "ecart_panel":3.64,# about panel width to concatenate two panels
+    "ecart_panel":3.2,# about panel width to concatenate two panels
     "ecart_rangee":9.5, # dtistance between two divide(piqué)
-    "hauteur_haut_p":4.05, # panel heigth max
-    "hauteur_bas_p":3.35, # panel heigth min
+    "hauteur_p":3.25,
     "panel_opacity":0.5, # beyon 1 for panel semitransparent
     "angle_p":10} # angle beta_p (tilt)
     
     params_panel_ajoures_chapeau_est={
     "orientation":"est",
     "type_panneau":"chapeau",
-    "longueur_p":3.54, ### panel width
+    "longueur_p":3.2, ### panel width
     "largeur_p":3.47,# panel length
     "resolution_p":0.4, # for the mesh when use mesh panel fonction
     "nb_panel":4, # the standard for simulation
     "nb_rangee":4, # the standard for simulation
-    "ecart_panel":3.64,# about panel width to concatenate two panels
+    "ecart_panel":3.2,# about panel width to concatenate two panels
     "ecart_rangee":9.5, # dtistance between two divide(piqué)
-    "hauteur_haut_p":4.05, # panel heigth max
-    "hauteur_bas_p":3.35, # panel heigth min
+    "hauteur_p":3.25,
     "panel_opacity":0.5, # beyon 1 for panel semitransparent
     "angle_p":10} # angle beta_p (tilt)
     
         
-    log("loading arguments parameters")
+    # log("loading arguments parameters")
     # parameters = [(params_panel_norm_sud,dict_soil_test_sud,dict_date_test_mai,"normal_sud"),
     #         (params_panel_norm_chapeau_est,dict_soil_test_est,dict_date_test_mai,"normal_chapeau_est"),
     #         (params_panel_ajoures_normal_sud,dict_soil_test_sud,dict_date_test_mai,"ajoures_panel_sud"),
@@ -424,12 +309,12 @@ if __name__=="__main__":
     # for element in mapping_fixed_panel:
     #     element.to_csv(f"data_radiation{element}.csv")
     log("starting simulation for normal panel")
-    mapping_south_panel=plotting_outpluts(params_panel_norm_sud,dict_soil_test_sud,dict_date_test_mai,"normal_sud")
+    mapping_south_panel=FIXED_SIMULATION_V1(params_panel_norm_sud,dict_soil_st,dict_date_test_mai,"FIXED_SUD_TEST")
     
-    log("starting simulation for normal panel chapeau")
-    mapping_east_panel=plotting_outpluts(params_panel_norm_chapeau_est,dict_soil_test_est,dict_date_test_mai,"normal_chapeau_est")
+    # # log("starting simulation for normal panel chapeau")
+    # # mapping_east_panel=plotting_outpluts(params_panel_norm_chapeau_est,dict_soil_test_est,dict_date_test_mai,"normal_chapeau_est")
 
-    log('simulation successfuly ...................')
+    # log('simulation successfuly ...................')
         
 
 

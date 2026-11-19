@@ -58,7 +58,7 @@ def dayof_year_extraction(debut,fin,frequence,tz):
 def light_caribu(day_of_year,heure_decimaux,latitude,intensity,diffuse):
         doy = float(day_of_year)
         s=Sun.Sun()
-        s._set_pos_astro(doy,heure_decimaux,3.14/180*latitude)
+        s._set_pos_astro(doy,heure_decimaux,3.14/180 * latitude)
         if math.degrees(s.elev)< 88:
             sun =  Gensun.Gensun()(1, doy, heure_decimaux, latitude)
             sun = GetLightsSun.GetLightsSun(sun)
@@ -68,7 +68,6 @@ def light_caribu(day_of_year,heure_decimaux,latitude,intensity,diffuse):
             # z=round(float(sun_str_split[3]),2)
             angle_zenithal, angle_azimutal =s._get_pos_astro()
             elevation_solaire= math.radians(90)-angle_zenithal
-
  
             if diffuse==True:
                 sun_light = tuple((float(1),tuple((float(sun_str_split[1]), float(sun_str_split[2]), float(sun_str_split[3])))))
@@ -81,10 +80,6 @@ def light_caribu(day_of_year,heure_decimaux,latitude,intensity,diffuse):
             angle_azimutal=None
             return sun_light,elevation_solaire,angle_azimutal
  
-
-
-
-
 
 
 ###calculation cartesians points

@@ -749,32 +749,99 @@ octobre_2029 = pd.DataFrame({
     "soutenance de thèse":[0]*(n_oct_2029-1) +[1]
 }).set_index("Dates")
 
-doc=[septembre_2026,octobre_2026,novembre_2026,decembre_2026,janvier_2027,fevrier_2027,mars_2027,avril_2027,mai_2027,juin_2027,juillet_2027,aout_2027,septembre_2027,octobre_2027,novembre_2027,decembre_2027,janvier_2028,fevrier_2028,mars_2028,avril_2028,mai_2028,juin_2028,juillet_2028,aout_2028,septembre_2028,octobre_2028,novembre_2028,decembre_2028,janvier_2029,fevrier_2029,mars_2029,avril_2029,mai_2029,juin_2029,juillet_2029,aout_2029,septembre_2029,octobre_2029]
+
+
+####################################### planning aout a decembre 2026
+# aout 2026
+aout_2026=pd.date_range(start="2026-08-01",end="2026-08-31",freq="B")
+jours_aout = len(aout_2026)
+quart_aout_2026 = jours_aout // 4
+print(quart_aout_2026)
+print(aout_2026)
+
+AOUT = pd.DataFrame({
+    "DATES":aout_2026,
+    "REDACTION MANUSCRIT":[0]*quart_aout_2026 + [0]*(3)+[1]*(2)+[0]*(jours_aout-((quart_aout_2026 + 3 + 2))),
+    "REALISATION DE L'EXPERIMENTATION INTERMITTENCE":[0]*jours_aout,
+    "PRODUCTION POSTER FSPM 2026 ":[0]*(quart_aout_2026) + [1]*3 + [0]*(2) + [0]*(2)+[1]*(3) + [0]*(jours_aout - (quart_aout_2026 + 3 + 2 +2 +3)),
+    "SOUMMISSION D'ARTICLE ":[0]*(3*quart_aout_2026)+[1]*(jours_aout - (3*quart_aout_2026))}).set_index("DATES")
+
+####################################### planning aout a decembre 2026
+# septembre 2026
+septembre_2026=pd.date_range(start="2026-09-01",end="2026-09-30",freq="B")
+jours_sept = len(septembre_2026)
+quart_sept_2026 = jours_sept // 4
+
+SEPT = pd.DataFrame({
+    "DATES":septembre_2026,
+    "REDACTION MANUSCRIT":[0]*jours_sept,
+    "REALISATION DE L'EXPERIMENTATION INTERMITTENCE":[0]*(quart_sept_2026) + [1] * (quart_sept_2026) + [0] * (jours_sept - (2*quart_sept_2026)),
+    "PRODUCTION POSTER FSPM 2026":[0]*(jours_sept),
+    "SOUMMISSION D'ARTICLE":[1]*(2*quart_sept_2026)+ [1]*(jours_sept - (2*quart_aout_2026))}).set_index("DATES")
+        
+# octobre 2026
+octobre_2026=pd.date_range(start="2026-10-01",end="2026-10-31",freq="B")
+jours_oct = len(octobre_2026)
+quart_oct_2026 = jours_oct // 4
+
+
+OCT = pd.DataFrame({
+    "DATES":octobre_2026,
+    "REDACTION MANUSCRIT":[0]*jours_oct,
+    "REALISATION DE L'EXPERIMENTATION INTERMITTENCE":[1]*(quart_oct_2026)+[0]*(quart_oct_2026)+ [0]*(jours_oct-(2*quart_oct_2026)),
+    "PRODUCTION POSTER FSPM 2026":[0]*(quart_oct_2026) + [1]*(quart_oct_2026) + [0]*(jours_oct-(2*quart_oct_2026)),
+    "SOUMMISSION D'ARTICLE":[1]*(quart_oct_2026) + [0]*(quart_oct_2026) + [1]*(quart_oct_2026) + [1]*(3)+ [0]*(jours_oct-((3*quart_oct_2026)+3))}).set_index("DATES")
+
+# Novembre 2026
+novembre_2026=pd.date_range(start="2026-11-01",end="2026-11-30",freq="B")
+jours_nov = len(novembre_2026)
+quart_nov_2026 = jours_nov // 4
+
+NOV = pd.DataFrame({
+    "DATES":novembre_2026,
+    "REDACTION MANUSCRIT":[0]*jours_nov,
+    "REALISATION DE L'EXPERIMENTATION INTERMITTENCE":[1]*(2*quart_nov_2026) + [0]*(jours_nov-(2*quart_nov_2026)),
+    "PRODUCTION POSTER FSPM 2026":[0]*(jours_nov),
+    "SOUMMISSION D'ARTICLE":[0]*quart_nov_2026 + [1]*quart_nov_2026 + [1]*(jours_nov -(2*quart_nov_2026))}).set_index("DATES")
+
+# Decembre 2026
+decembre_2026=pd.date_range(start="2026-12-01",end="2026-12-31",freq="B")
+jours_dec = len(decembre_2026)
+quart_dec_2026 = jours_dec // 4
+
+
+DEC = pd.DataFrame({
+    "DATES":decembre_2026,
+    "REDACTION MANUSCRIT":[0]*jours_dec,
+    "REALISATION DE L'EXPERIMENTATION INTERMITTENCE":[0]*(2*quart_dec_2026) + [1]*(jours_dec-(2*quart_dec_2026)),
+    "PRODUCTION POSTER FSPM 2026":[0]*jours_dec,
+    "SOUMMISSION D'ARTICLE":[1]*(2*quart_dec_2026)+ [0]*(jours_dec-(2*quart_dec_2026))}).set_index("DATES")
+
+doc=[AOUT,SEPT,OCT,NOV,DEC]
 
 tableau =pd.concat(doc).fillna(0)
 tableau.index=pd.to_datetime(tableau.index)
 tableau_t=tableau.T
+print(tableau.head(10))
 
 #############
 import seaborn as sns
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-# 1. Nettoyage et conversion pour éviter le "graphique vide"
+
 # On regroupe les colonnes similaires et on force le type numérique
 df_clean = tableau.copy()
 df_clean.columns = [c.strip() for c in df_clean.columns]
 df_clean = df_clean.groupby(level=0, axis=1).max().fillna(0).astype(int)
+df_clean = df_clean.T.groupby(level=0).max().T.fillna(0).astype(int)
+print(df_clean)
 
 # 2. RÉDUIRE L'AFFICHAGE : On passe d'un affichage journalier à HEBDOMADAIRE
-# .resample('W').max() prend la valeur max (1) si vous avez travaillé au moins un jour dans la semaine
+#df_clean.resample('W').max() 
 df_resampled = df_clean.resample('W').max()
 
-
-
-
-plt.tight_layout()
-plt.show()
 
 # 1. Somme totale des jours travaillés par colonne
 totaux_jours = df_clean.sum()
@@ -807,7 +874,7 @@ ax = sns.heatmap(df_resampled.T,
 locs, labels = plt.xticks()
 plt.xticks(locs[::4], [df_resampled.index[int(i)].strftime('%b %Y') for i in locs[::4]], rotation=45)
 
-plt.title("Planning de Thèse (Vue Hebdomadaire)", fontsize=12, pad=20)
+plt.title("Planning des différentes tâches (echelle Hebdomadaire)", fontsize=12, pad=20)
 plt.ylabel("Activités",fontsize=8)
 plt.xlabel("Temps (Semaines)",fontsize=8)
 plt.yticks(fontsize=6)
@@ -831,7 +898,7 @@ fig.text(0.78, 0.5, texte_stats,
          transform=fig.transFigure,
          bbox=dict(
              boxstyle='round,pad=1',      # Coins arrondis et marge intérieure
-             facecolor='#1a1a1a',         # Fond gris très foncé pour le rectangle
+             facecolor="#141414",         # Fond gris très foncé pour le rectangle
              edgecolor='gray',            # Bordure grise
              alpha=0.8                    # Légère transparence pour le style
          ))

@@ -34,53 +34,53 @@ idx=identifiants des unités
 all of this parameters are obtains on params dictionary
 
 """
-def maillage_sol_fonct(params_sol):
-    resol=params_sol.get("resol")
-    longueur=params_sol.get("longueur")
-    largeur=params_sol.get("largeur")
-    ep=params_sol.get("ep")
-    ##### 
-    res_x=resol
-    res_y=resol
-    ep=ep
-    nb_pixel_x=math.ceil(longueur/resol)
-    nb_pixel_y=math.ceil(largeur/resol)
-    careau_unit=Box(Vector3(res_x/2,res_y/2,ep))
-    maillage=[]
-    idx=0
-    ### centralisation du maillage 
-    pos_x_depart= -((nb_pixel_x-1)*res_x)/2
-    pos_y_depart= -((nb_pixel_y-1)*res_y)/2
-    ## maillage totaux
-    for i in range(nb_pixel_x):
-        for j in range(nb_pixel_y):
-            x_final = pos_x_depart + (res_x * i)
-            y_final = pos_y_depart + (res_y * j)
-            objet=Shape(Translated(Vector3(x_final,y_final,0),careau_unit),id=idx)
-            maillage.append(objet)
-            idx+=1
-    return maillage
+# def maillage_sol_fonct(params_sol):
+#     resol=params_sol.get("resol")
+#     longueur=params_sol.get("longueur")
+#     largeur=params_sol.get("largeur")
+#     ep=params_sol.get("ep")
+#     ##### 
+#     res_x=resol
+#     res_y=resol
+#     ep=ep
+#     nb_pixel_x=math.ceil(longueur/resol)
+#     nb_pixel_y=math.ceil(largeur/resol)
+#     careau_unit=Box(Vector3(res_x/2,res_y/2,ep))
+#     maillage=[]
+#     idx=0
+#     ### centralisation du maillage 
+#     pos_x_depart= -((nb_pixel_x-1)*res_x)/2
+#     pos_y_depart= -((nb_pixel_y-1)*res_y)/2
+#     ## maillage totaux
+#     for i in range(nb_pixel_x):
+#         for j in range(nb_pixel_y):
+#             x_final = pos_x_depart + (res_x * i)
+#             y_final = pos_y_depart + (res_y * j)
+#             objet=Shape(Translated(Vector3(x_final,y_final,0),careau_unit),id=idx)
+#             maillage.append(objet)
+#             idx+=1
+#     return maillage
 
 
 #####
-def survey_zone(ecart_rangee,orientation):
-    zone_1 = Box(Vector3(0.1, 0.1, 0.001))
-    rouge = Material(Color3(255,0, 0))
-    geom0 = zone_1
-    if orientation in ["sud","nord"]:  
-        geom1 = Translated(Vector3(0, -ecart_rangee/4, 0), zone_1)
-        geom2 = Translated(Vector3(0, -ecart_rangee/2, 0), zone_1)
-        place_box0 = Shape(geom0,rouge,id=0)
-        place_box1 = Shape(geom1,rouge,id=1)
-        place_box2 = Shape(geom2,rouge,id=2)
-    else :
-        geom1 = Translated(Vector3(-ecart_rangee/4,0,0), zone_1)
-        geom2 = Translated(Vector3(-ecart_rangee/2,0,0), zone_1)
-        place_box0 = Shape(geom0,rouge,id=0)
-        place_box1 = Shape(geom1,rouge,id=1)
-        place_box2 = Shape(geom2,rouge,id=2)
+# def survey_zone(ecart_rangee,orientation):
+#     zone_1 = Box(Vector3(0.1, 0.1, 0.001))
+#     rouge = Material(Color3(255,0, 0))
+#     geom0 = zone_1
+#     if orientation in ["sud","nord"]:  
+#         geom1 = Translated(Vector3(0, -ecart_rangee/4, 0), zone_1)
+#         geom2 = Translated(Vector3(0, -ecart_rangee/2, 0), zone_1)
+#         place_box0 = Shape(geom0,rouge,id=0)
+#         place_box1 = Shape(geom1,rouge,id=1)
+#         place_box2 = Shape(geom2,rouge,id=2)
+#     else :
+#         geom1 = Translated(Vector3(-ecart_rangee/4,0,0), zone_1)
+#         geom2 = Translated(Vector3(-ecart_rangee/2,0,0), zone_1)
+#         place_box0 = Shape(geom0,rouge,id=0)
+#         place_box1 = Shape(geom1,rouge,id=1)
+#         place_box2 = Shape(geom2,rouge,id=2)
     
-    return[place_box0,place_box1,place_box2]
+#     return[place_box0,place_box1,place_box2]
 
 #####
 """
@@ -190,12 +190,12 @@ def type_panneau_orient_st(orientation,longueur_p,largeur_p,nb_panel,nb_rangee,e
     ##
     panel_final = []
     panel_unit = Box(Vector3(longueur_p/2, largeur_p/2, 0.001))
-    # panel_incl = AxisRotated(Vector3(1,0,0), angle_rad, panel_unit)
-    # panel_base = Translated(Vector3(0,0,hauteur_p), panel_incl)
+    panel_incl = AxisRotated(Vector3(1,0,0), angle_rad, panel_unit)
+    panel_base = Translated(Vector3(0,0,hauteur_p), panel_incl)
     
     
-    panel_incl = Translated(Vector3(0,0,hauteur_p), panel_unit)
-    panel_base = AxisRotated(Vector3(1,0,0), angle_rad, panel_incl)
+    # panel_incl = Translated(Vector3(0,0,hauteur_p), panel_unit)  # dont use this functionnnnnnnnnn (the translated and rotated functions are not comutated)
+    # panel_base = AxisRotated(Vector3(1,0,0), angle_rad, panel_incl)
     
     poteau_init=[Cylinder(radius=0.05,height=hauteur_p)]
     panel_final_shape = [panel_base]
@@ -244,19 +244,19 @@ def type_panneau_orient_st(orientation,longueur_p,largeur_p,nb_panel,nb_rangee,e
 ### function between angle panel and solar position
 # first one used to figure out the betap of antitracking
 def fonction_A_betap(alpha_s,beta_s,beta_p,alpha_p=0):
-  return np.cos(beta_p)*((np.sin(alpha_s)*np.sin(beta_s)*np.sin(alpha_p)+np.cos(alpha_s)*np.cos(beta_s)*np.cos(alpha_p)))
+  return np.cos(beta_p) * ((np.sin(alpha_s) * np.sin(beta_s) * np.sin(alpha_p)+ np.cos(alpha_s) * np.cos(beta_s) * np.cos(alpha_p)))
 
 def fonction_B_beta_p(beta_s,beta_p):
   return np.sin(beta_p)*(np.sin(beta_s))
 
 ## important for solving the equation 
 def fonction_X(alpha_s,beta_s,alpha_p=0):
-    return np.sin(alpha_s)*np.sin(beta_s)*np.sin(alpha_p)+np.cos(alpha_s)*np.cos(beta_s)*np.cos(alpha_p)
+    return np.sin(alpha_s) * np.sin(beta_s) * np.sin(alpha_p) + np.cos(alpha_s) * np.cos(beta_s) * np.cos(alpha_p)
 def fonction_Y (beta_s):
     return np.sin(beta_s)
     
 
-## fonctions derivée use to determine the angle beta_p solar tracking
+## derived fonction used to determine the angle beta_p solar tracking
 def fonction_A_beta_p_prime(alpha_s,beta_s,beta_p,alpha_p=0):
     -np.sin(beta_p)*((np.sin(alpha_s)*np.sin(beta_s)*np.sin(alpha_p)+np.cos(alpha_s)*np.cos(beta_s)*np.cos(alpha_p)))
     
@@ -266,7 +266,7 @@ def fonction_B_beta_p_prime(beta_s,beta_p):
 #### programming as oop for solar tracking and antitracking
 """
 for the solar tracking, the equation was derived and the angle beta was obtain when the 
-equation i set to equal zero
+derived equation were set to equal zero
 the angle is between [-pi/2 and pi/2] pi/2 earlier in the morning and -pi/2 before the sun goes down
 
 for the antitracking, we simply solve the main fonction to equal zero
@@ -308,7 +308,7 @@ def scene_carbi_run_stracking(params_sol,params_panel,data_date):
     angle_calc=[]
     hours=[]
     scene_panneau=[]
-    log("beginning itteration")
+
     t1=time.time()
     for ind, row in enumerate(tqdm(data_ele_azim.itertuples(), total=len(data_ele_azim))):
         light = [(1,(row.x,row.y,row.z))]
